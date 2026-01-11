@@ -59,12 +59,68 @@ def cleaner(File_list,folder_names,DRY_MODE):
 
    
 folder_names = {
-    'Image': ['.png', '.jpg', '.svg'],
-    'Pdf': ['.pdf'],
-    'Txt': ['.txt'],
-    'Code': ['.py', '.html', '.js', '.css'],
-    'Archive': ['.zip', '.rar', '7z' , '.tar'],
-    }
+    
+    "PDF_Files": [".pdf"],
+    "Word_Documents": [".doc", ".docx"],
+    "Text_Files": [".txt", ".md"],
+    "Presentations": [".ppt", ".pptx"],
+    "Spreadsheets": [".xls", ".xlsx", ".csv"],
+
+    
+    "Images_JPEG": [".jpg", ".jpeg"],
+    "Images_PNG": [".png"],
+    "Images_SVG": [".svg"],
+    "Images_GIF": [".gif"],
+    "Images_WEBP": [".webp"],
+    "Images_RAW": [".raw", ".nef", ".cr2"],
+
+    
+    "Code_Python": [".py"],
+    "Code_JavaScript": [".js"],
+    "Code_HTML": [".html"],
+    "Code_CSS": [".css"],
+    "Code_C_CPP": [".c", ".cpp", ".h"],
+    "Code_Java": [".java"],
+    "Code_Go": [".go"],
+    "Code_Rust": [".rs"],
+    "Code_SQL": [".sql"],
+    "Code_Shell": [".sh"],
+
+    
+    "Data_JSON": [".json"],
+    "Data_YAML": [".yml", ".yaml"],
+    "Data_XML": [".xml"],
+    "Config_Files": [".ini", ".cfg", ".conf"],
+    "Log_Files": [".log"],
+
+    
+    "Video_MP4": [".mp4"],
+    "Video_MKV": [".mkv"],
+    "Video_MOV": [".mov"],
+    "Audio_MP3": [".mp3"],
+    "Audio_WAV": [".wav"],
+    "Audio_FLAC": [".flac"],
+
+    
+    "Archives_ZIP": [".zip"],
+    "Archives_RAR": [".rar"],
+    "Archives_7Z": [".7z"],
+    "Archives_TAR": [".tar"],
+    "Archives_GZ": [".gz"],
+
+    
+    "Executables_EXE": [".exe"],
+    "Installers_DMG": [".dmg"],
+    "Installers_PKG": [".pkg"],
+    "Installers_MSI": [".msi"],
+
+    
+    "Fonts_TTF": [".ttf"],
+    "Fonts_OTF": [".otf"],
+
+    
+    "No_Extension": [""]
+}
 
 print("Input the directory u want to clean")
 #DIR = input("> ")
