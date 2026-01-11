@@ -91,7 +91,7 @@ def cleaner(File_list, folder_names, DRY_MODE):
 
                     mover(source, destination)
                 else:
-                    f = file_path / folder
+                    f = file_path.parent / folder
                     f.mkdir(parents=True, exist_ok=True)
                     mover(source, destination)
 
