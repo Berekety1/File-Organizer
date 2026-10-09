@@ -1,177 +1,66 @@
-import os
-import shutil
+"""Tidy up a messy folder by sorting its files into subfolders by type.
+
+    python main.py ~/Downloads             # show the plan, then ask before moving
+    python main.py ~/Downloads --dry-run   # only show the plan
+    python main.py ~/Downloads --yes       # move without asking
+    python main.py ~/Downloads --undo      # put everything from the last run back
+"""
+import argparse
+from collections import defaultdict
 from pathlib import Path
 
-
-def get_unique_path(path):
-    counter = 1
-    original_path = path
-
-    while path.exists():
-
-        path = original_path.with_name(
-            f"{original_path.stem}_{counter}{original_path.suffix}")
-        counter += 1
-
-    return path
+import organizer
 
 
-def mover(source, destiantion):
-    if os.path.exists(destiantion):
-        path = Path(destiantion)
-
-        new_destination = get_unique_path(path)
-
-        shutil.move(source, new_destination)
-    else:
-        shutil.move(source, destiantion)
-
-
-def cleaner(File_list, folder_names, DRY_MODE):
-    for file in File_list:
-        IS_FILE_IN_LIST = False
-        for key, values in folder_names.items():
-            if IS_FILE_IN_LIST == True:
-                break
-            extension = os.path.splitext(file)[1]
-            for ext in values:
-                if extension.lower() == ext.lower():
-                    if os.path.exists(key):
-                        if DRY_MODE:
-                            print(
-                                f'[DRY MODE] Move {os.path.split(file)[1]} --> {key}/{os.path.split(file)[1]} '
-                            )
-                            IS_FILE_IN_LIST = True
-                            break
-                        else:
-                            file_path = Path(file)
-                            source = file_path
-                            destination = file_path.parent / key / file_path.name
-                            mover(source, destination)
-                            IS_FILE_IN_LIST = True
-                            break
-
-                    else:
-                        if DRY_MODE:
-                            print(f'[DRY MODE]Create Folder {key}')
-                            print(
-                                f'[DRY MODE] Move {os.path.split(file)[1]} --> {key}/{os.path.split(file)[1]}'
-                            )
-                            IS_FILE_IN_LIST = True
-                            break
-
-                        else:
-                            file_path = Path(file)
-                            folder = file_path.parent / key
-                            source = file_path
-                            destination = file_path.parent / key / file_path.name
-
-                            folder.mkdir(parents=True, exist_ok=True)
-                            mover(source, destination)
-                            IS_FILE_IN_LIST = True
-                            break
-
-        if IS_FILE_IN_LIST is False:
-            file_path = Path(file)
-            source = file_path
-            folder = "Other"
-            destination = file_path.parent / folder / file_path.name
-            if DRY_MODE:
-                if os.path.exists(folder):
-                    print(
-                        f"[DRY MODE] Move {file_path.name} --> {folder+'/'+file_path.name}"
-                    )
-                else:
-                    print(f'[DRY MODE]Create Folder {folder}')
-                    print(
-                        f"[DRY MODE] Move {file_path.name} --> {folder+file_path.name}"
-                    )
-            else:
-                if os.path.exists(folder):
-
-                    mover(source, destination)
-                else:
-                    f = file_path.parent / folder
-                    f.mkdir(parents=True, exist_ok=True)
-                    mover(source, destination)
+def show_plan(folder, moves):
+    groups = defaultdict(list)
+    for source, destination in moves:
+        groups[destination.parent.name].append((source.name, destination.name))
+    print(f"Found {len(moves)} files to organise in {folder}\n")
+    for group in sorted(groups):
+        print(f"{group}/ ({len(groups[group])})")
+        for old, new in groups[group]:
+            print(f"  {old}" + (f"  ->  {new} (renamed, name already taken)" if new != old else ""))
+    print()
 
 
-folder_names = {
-    "PDF_Files": [".pdf"],
-    "Word_Documents": [".doc", ".docx"],
-    "Text_Files": [".txt", ".md"],
-    "Presentations": [".ppt", ".pptx"],
-    "Spreadsheets": [".xls", ".xlsx", ".csv"],
-    "Images_JPEG": [".jpg", ".jpeg"],
-    "Images_PNG": [".png"],
-    "Images_SVG": [".svg"],
-    "Images_GIF": [".gif"],
-    "Images_WEBP": [".webp"],
-    "Images_RAW": [".raw", ".nef", ".cr2"],
-    "Code_Python": [".py"],
-    "Code_JavaScript": [".js"],
-    "Code_HTML": [".html"],
-    "Code_CSS": [".css"],
-    "Code_C_CPP": [".c", ".cpp", ".h"],
-    "Code_Java": [".java"],
-    "Code_Go": [".go"],
-    "Code_Rust": [".rs"],
-    "Code_SQL": [".sql"],
-    "Code_Shell": [".sh"],
-    "Data_JSON": [".json"],
-    "Data_YAML": [".yml", ".yaml"],
-    "Data_XML": [".xml"],
-    "Config_Files": [".ini", ".cfg", ".conf"],
-    "Log_Files": [".log"],
-    "Video_MP4": [".mp4"],
-    "Video_MKV": [".mkv"],
-    "Video_MOV": [".mov"],
-    "Audio_MP3": [".mp3"],
-    "Audio_WAV": [".wav"],
-    "Audio_FLAC": [".flac"],
-    "Archives_ZIP": [".zip"],
-    "Archives_RAR": [".rar"],
-    "Archives_7Z": [".7z"],
-    "Archives_TAR": [".tar"],
-    "Archives_GZ": [".gz"],
-    "Executables_EXE": [".exe"],
-    "Installers_DMG": [".dmg"],
-    "Installers_PKG": [".pkg"],
-    "Installers_MSI": [".msi"],
-    "Fonts_TTF": [".ttf"],
-    "Fonts_OTF": [".otf"],
-    "No_Extension": [""]
-}
+def main():
+    parser = argparse.ArgumentParser(description="Sort the files in a folder into subfolders by type.")
+    parser.add_argument("folder", nargs="?", help="folder to organise (asked for if left out)")
+    parser.add_argument("--dry-run", action="store_true", help="only show what would be moved")
+    parser.add_argument("--yes", "-y", action="store_true", help="don't ask for confirmation")
+    parser.add_argument("--undo", action="store_true", help="reverse the last run in this folder")
+    args = parser.parse_args()
 
-print("Input the directory u want to clean")
-#DIR = input("> ")
-DIR = '/Users/bereket/Desktop/Try/'
-Exists = False
-if os.path.exists(DIR):
-    print(f'The Folder {DIR} exists')
-    Exists = True
-else:
-    print(f'The Folder {DIR} doesn\'t exist')
+    folder = Path(args.folder or input("Folder to organise: ").strip().strip('"')).expanduser()
+    if not folder.is_dir():
+        print(f"{folder} is not a folder.")
+        return
 
-if Exists:
-    path = Path(DIR)
+    if args.undo:
+        try:
+            print(f"Restored {organizer.undo(folder)} files.")
+        except FileNotFoundError as e:
+            print(e)
+        return
 
-    File_list = []
+    moves = organizer.plan(folder)
+    if not moves:
+        print("Nothing to organise.")
+        return
+    show_plan(folder, moves)
+    if args.dry_run:
+        return
+    if not args.yes and input(f"Move {len(moves)} files? (y/n): ").strip().lower() != "y":
+        print("Nothing was moved.")
+        return
 
-    for file in path.iterdir():
-        if file.is_file():
-            File_list.append(file)
+    count = organizer.apply(folder, moves)
+    print(f"Moved {count} files. Run again with --undo to put them back.")
 
-    print(f'I found {len(File_list)} unorganized files in this folder')
-    for i in File_list:
-        print(f'file -- {i}')
 
-cleaner(File_list, folder_names, DRY_MODE=True)
-
-y = input("Do you want to continue(y/n): ")
-
-if y.capitalize() == 'Y':
-    cleaner(File_list, folder_names, DRY_MODE=False)
-    print(f"{len(File_list)} files succesfully cleaned")
-else:
-    print("Cleaning Stopped")
+if __name__ == "__main__":
+    try:
+        main()
+    except (KeyboardInterrupt, EOFError):
+        print("\nCancelled.")
